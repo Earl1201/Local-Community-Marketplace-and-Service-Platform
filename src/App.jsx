@@ -10,6 +10,8 @@ import ListingDetail from './pages/ListingDetail'
 import CreateListing from './pages/CreateListing'
 import MyListings from './pages/MyListings'
 import Bookings from './pages/Bookings'
+import Profile from './pages/Profile'
+import Messages from './pages/Messages'
 import './App.css'
 
 function App() {
@@ -29,6 +31,8 @@ function App() {
                 <Route path="/create-listing" element={<CreateListing />} />
                 <Route path="/my-listings" element={<MyListings />} />
                 <Route path="/bookings" element={<Bookings />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/messages" element={<Messages />} />
               </Routes>
             </main>
           </div>

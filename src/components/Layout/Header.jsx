@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
@@ -31,7 +32,34 @@ export default function Header() {
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
 
+  // Click-based dropdown — no CSS hover
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  // Close when clicking anywhere outside the menu
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [])
+
+  const closeMenu = () => setMenuOpen(false)
+
   const handleSignOut = async () => {
+    closeMenu()
     await signOut()
     navigate('/')
   }
@@ -40,25 +68,22 @@ export default function Header() {
     <header className="header">
       <div className="container">
         <div className="header-content">
-          {/* Logo */}
-          <Link to="/" className="logo">
+          <Link to="/" className="logo" onClick={closeMenu}>
             <span className="logo-icon">🏘️</span>
             <span className="logo-text">Community Market</span>
           </Link>
 
-          {/* Navigation */}
           <nav className="nav" aria-label="Main navigation">
-            <Link to="/marketplace" className="nav-link">Marketplace</Link>
-            <Link to="/services" className="nav-link">Services</Link>
+            <Link to="/marketplace" className="nav-link" onClick={closeMenu}>Marketplace</Link>
+            <Link to="/services" className="nav-link" onClick={closeMenu}>Services</Link>
 
             {user && (
               <>
-                <Link to="/my-listings" className="nav-link">My Listings</Link>
-                <Link to="/bookings" className="nav-link">Bookings</Link>
+                <Link to="/my-listings" className="nav-link" onClick={closeMenu}>My Listings</Link>
+                <Link to="/bookings" className="nav-link" onClick={closeMenu}>Bookings</Link>
               </>
             )}
 
-            {/* Dark / Light mode toggle */}
             <button
               className="theme-toggle"
               onClick={toggleTheme}
@@ -68,34 +93,44 @@ export default function Header() {
               {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
             </button>
 
-            {/* Authenticated user menu */}
             {user ? (
-              <div className="user-menu">
-                <button className="avatar-btn" aria-label="Open user menu" aria-haspopup="true">
+              <div className="user-menu" ref={menuRef}>
+                {/* Avatar button — click toggles dropdown */}
+                <button
+                  className="avatar-btn"
+                  onClick={() => setMenuOpen((prev) => !prev)}
+                  aria-label="Open user menu"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                >
                   {profile?.full_name?.charAt(0)?.toUpperCase() || 'U'}
                 </button>
-                <div className="dropdown" role="menu">
-                  <Link to="/profile" className="dropdown-item" role="menuitem">
-                    👤 Profile
-                  </Link>
-                  <Link to="/create-listing" className="dropdown-item" role="menuitem">
-                    ➕ Create Listing
-                  </Link>
-                  <Link to="/messages" className="dropdown-item" role="menuitem">
-                    💬 Messages
-                  </Link>
-                  <button
-                    onClick={handleSignOut}
-                    className="dropdown-item"
-                    role="menuitem"
-                    style={{ color: '#ef4444' }}
-                  >
-                    🚪 Sign Out
-                  </button>
-                </div>
+
+                {/* Dropdown only exists in DOM when open — no hover leak */}
+                {menuOpen && (
+                  <div className="dropdown" role="menu">
+                    <Link to="/profile" className="dropdown-item" role="menuitem" onClick={closeMenu}>
+                      👤 Profile
+                    </Link>
+                    <Link to="/create-listing" className="dropdown-item" role="menuitem" onClick={closeMenu}>
+                      ➕ Create Listing
+                    </Link>
+                    <Link to="/messages" className="dropdown-item" role="menuitem" onClick={closeMenu}>
+                      💬 Messages
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="dropdown-item"
+                      role="menuitem"
+                      style={{ color: '#ef4444' }}
+                    >
+                      🚪 Sign Out
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
-              <Link to="/auth" className="btn-primary">Sign In</Link>
+              <Link to="/auth" className="btn-primary" onClick={closeMenu}>Sign In</Link>
             )}
           </nav>
         </div>
